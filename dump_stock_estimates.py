@@ -3,6 +3,7 @@ import logging
 import json
 import time
 import os
+import sys
 import pandas as pd
 
 from dotenv import load_dotenv
@@ -10,14 +11,18 @@ from datetime import datetime
 
 from stock_estimates_db import StockEstimatesDB
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    filename='query_estimate_data.log',
-    filemode='a',
-    force=True
-)
+log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+file_handler = logging.FileHandler('query_estimate_data.log', mode='a')
+file_handler.setFormatter(log_format)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(log_format)
+
+logger = logging.getLogger('DUMP STOCK ESTIMATES')
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 
 def get_symbol_id(symbol):
@@ -56,8 +61,6 @@ def get_stock_estimate(symbol):
 
 
 def main():
-    logger = logging.getLogger('query_estimate_data')
-
     service = StockEstimatesDB()
 
     tickers_df = pd.read_csv('acoes-listadas-b3.csv')
