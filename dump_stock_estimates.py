@@ -27,7 +27,7 @@ logger.addHandler(console_handler)
 
 def get_symbol_id(symbol):
     df = pd.read_csv('./data/msn_tickers_mapping.csv')
-    return df[df['RT00T'] == symbol]['SecId']
+    return df[df['RT00S'] == symbol]['SecId']
 
 
 def get_stock_estimate(symbol):
