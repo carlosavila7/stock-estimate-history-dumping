@@ -21,7 +21,7 @@ logging.basicConfig(
 
 
 def get_symbol_id(symbol):
-    df = pd.read_csv('./msn_tickers_mapping.csv')
+    df = pd.read_csv('./data/msn_tickers_mapping.csv')
     return df[df['OS001'] == symbol]['SecId']
 
 

@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any
 
 
 class StockEstimatesDB:
-    def __init__(self, db_path: str = 'database/stock_estimates.db'):
+    def __init__(self, db_path: str = 'data/stock_estimates.db'):
         self.db_path = db_path
         self.conn = None
         self.cursor = None

@@ -34,7 +34,7 @@ def query_stock_symbol(symbol: str):
         return data
     
 def main():
-    output_path = "msn_tickers_mapping"
+    output_path = "data/msn_tickers_mapping"
 
     tickers_df = pd.read_csv('acoes-listadas-b3.csv')
     tickers = tickers_df['Ticker'].to_list()
