@@ -1,0 +1,7 @@
+services:
+  stock-estimate-dump:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
