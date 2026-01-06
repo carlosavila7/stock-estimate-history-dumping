@@ -3,5 +3,7 @@ services:
     build: .
     env_file:
       - .env
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
