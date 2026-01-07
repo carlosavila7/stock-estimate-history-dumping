@@ -128,6 +128,10 @@ def script_runner_page():
                     with open(info['log'], "r") as f:
                         lines = f.readlines()
                         st.code("".join(lines[-10:]))
+                    logListen = st.checkbox("Listen to new logs (outside of execution trigger section)")
+                    if logListen:
+                        time.sleep(5)
+                        st.rerun()
                 else:
                     st.info("Log file not found.")
 
