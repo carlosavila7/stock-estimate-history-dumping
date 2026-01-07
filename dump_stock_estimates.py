@@ -7,11 +7,12 @@ import sys
 import pandas as pd
 
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from stock_estimates_db import StockEstimatesDB
 
-log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+log_format = logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 file_handler = logging.FileHandler('data/dump_stock_estimates.log', mode='a')
 file_handler.setFormatter(log_format)
@@ -33,8 +34,8 @@ def get_symbol_id(symbol):
 def get_stock_estimate(symbol):
     stock_id = get_symbol_id(symbol)
     if stock_id is None:
-        return None 
-    
+        return None
+
     url = "https://assets.msn.com/service/Finance/QuoteSummary"
 
     apiKey = os.getenv("API_KEY")
@@ -76,11 +77,12 @@ def main():
             continue
 
         if res[0].get('equity', {}).get('analysis', {}).get('estimate', {}).get('recommendation') is None:
-            logger.info(f"Not relevant information (recomendation) {ticker} ({i + 1}/{n_tickers})")
+            logger.info(
+                f"Not relevant information (recomendation) {ticker} ({i + 1}/{n_tickers})")
             continue
 
         row = {
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "date": datetime.now(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S"),
             "symbol": res[0]['quote']['symbol'],
             "price": res[0]['quote']['price'],
             "estimateCurrency": res[0].get('equity', {}).get('analysis', {}).get('estimate', {}).get('currency'),
