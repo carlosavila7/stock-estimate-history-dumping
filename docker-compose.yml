@@ -1,9 +1,11 @@
 services:
-  stock-data-dump:
+  app:
     build: .
     env_file:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
+    ports:
+      - "8501:8501"
     volumes:
       - ./data:/app/data

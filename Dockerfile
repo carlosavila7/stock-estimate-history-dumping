@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "query_estimate_data.py"]
+EXPOSE 8501
+
+CMD ["streamlit", "run", "dashboard.py"]
