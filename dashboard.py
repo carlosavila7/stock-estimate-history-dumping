@@ -10,6 +10,8 @@ st.set_page_config(page_title="Stock Estimates Dashboard", layout="wide")
 
 db = StockEstimatesDB('data/stock_estimates.db')
 
+base_path = os.path.dirname(os.path.abspath(__file__))
+
 
 def load_data():
     data = db.select_all()
@@ -86,8 +88,8 @@ def script_runner_page():
     st.title("Script Runner")
 
     scripts = {
-        "processor": {"name": "Dump estimates", "description": "This Python script is an ETL pipeline that retrieves analyst estimates and price targets for B3 stocks via the MSN Finance API. It maps tickers from a CSV file, fetches financial metrics like recommendations and volatility, and transforms the raw JSON into structured records. Finally, it saves the data to a database while managing API rate limits through built-in delays and logging.", "path": "process_estimates.py", "log": "data/dump_stock_estimates.log"},
-        "fetcher": {"name": "Map symbols", "description": "This script automates the mapping of B3 stock tickers to their corresponding MSN Finance internal IDs using the Bing Autosuggest API. It iterates through a list of symbols, cleans the API response by removing unnecessary metadata, and incrementally saves the results to a CSV file.",  "path": "map_symbols.py", "log": 'data/map_symbols.log'}
+        "processor": {"name": "Dump estimates", "description": "This Python script is an ETL pipeline that retrieves analyst estimates and price targets for B3 stocks via the MSN Finance API. It maps tickers from a CSV file, fetches financial metrics like recommendations and volatility, and transforms the raw JSON into structured records. Finally, it saves the data to a database while managing API rate limits through built-in delays and logging.", "path": os.path.join(base_path, "process_estimates.py"), "log": "data/dump_stock_estimates.log"},
+        "fetcher": {"name": "Map symbols", "description": "This script automates the mapping of B3 stock tickers to their corresponding MSN Finance internal IDs using the Bing Autosuggest API. It iterates through a list of symbols, cleans the API response by removing unnecessary metadata, and incrementally saves the results to a CSV file.",  "path": os.path.join(base_path, "map_symbols.py"), "log": 'data/map_symbols.log'}
     }
 
     if 'processes' not in st.session_state:
