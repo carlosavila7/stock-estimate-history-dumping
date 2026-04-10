@@ -64,7 +64,7 @@ def dashboard_page():
             m2.metric(
                 "Last Updated", f"{df['date'].max()}")
 
-            tab1, tab2 = st.tabs(["📋 Data Table", "📈 Price Trends"])
+            tab1, tab2, tab3 = st.tabs(["📋 Data Table", "📈 Price Trends", "📊 Analytics"])
 
             with tab1:
                 st.dataframe(filtered_df, width="content")
@@ -100,6 +100,114 @@ def dashboard_page():
                     yaxis=dict(range=[0, 5], title="Recommendation Rate")
                 )
                 st.plotly_chart(rec_fig)
+
+            with tab3:
+                _palette = [
+                    '#636EFA', '#EF553B', '#00CC96', '#AB63FA',
+                    '#FFA15A', '#19D3F3', '#FF6692', '#B6E880'
+                ]
+
+                # 1. Price Target Band
+                st.subheader("Price Target Band")
+                band_fig = go.Figure()
+                for i, symbol in enumerate(filtered_df['symbol'].unique()):
+                    sym_df = filtered_df[filtered_df['symbol'] == symbol].sort_values('date')
+                    color = _palette[i % len(_palette)]
+                    r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+                    fill_color = f"rgba({r},{g},{b},0.15)"
+                    dates_fwd = list(sym_df['date'])
+                    dates_rev = list(sym_df['date'])[::-1]
+                    band_fig.add_trace(go.Scatter(
+                        x=dates_fwd + dates_rev,
+                        y=list(sym_df['highPriceTarget']) + list(sym_df['lowPriceTarget'])[::-1],
+                        fill='toself', fillcolor=fill_color,
+                        line=dict(color='rgba(0,0,0,0)'),
+                        name=f"{symbol} Target Range",
+                        legendgroup=symbol, showlegend=True
+                    ))
+                    band_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['meanPriceTarget'],
+                        mode='lines+markers', name=f"{symbol} Mean Target",
+                        legendgroup=symbol, line=dict(color=color)
+                    ))
+                    band_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['price'],
+                        mode='lines+markers', name=f"{symbol} Price",
+                        legendgroup=symbol, line=dict(color=color, dash='dot')
+                    ))
+                band_fig.update_layout(
+                    title="Analyst Price Target Band vs. Actual Price",
+                    yaxis_title="Price"
+                )
+                st.plotly_chart(band_fig, use_container_width=True)
+
+                # 2. Upside / Downside %
+                st.subheader("Upside / Downside Potential Over Time")
+                upside_fig = go.Figure()
+                for symbol in filtered_df['symbol'].unique():
+                    sym_df = filtered_df[filtered_df['symbol'] == symbol].sort_values('date').copy()
+                    sym_df = sym_df[sym_df['price'] > 0]
+                    sym_df['upside_pct'] = (sym_df['meanPriceTarget'] - sym_df['price']) / sym_df['price'] * 100
+                    upside_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['upside_pct'],
+                        mode='lines+markers', name=symbol
+                    ))
+                upside_fig.add_hline(y=0, line_dash='dash', line_color='gray', opacity=0.5)
+                upside_fig.update_layout(
+                    title="Analyst Upside / Downside Potential (%)",
+                    yaxis_title="% vs. Current Price"
+                )
+                st.plotly_chart(upside_fig, use_container_width=True)
+
+                # 3. Recommendation Breakdown
+                st.subheader("Recommendation Breakdown Over Time")
+                _rec_colors = {
+                    'strongBuy': '#2ecc71', 'buy': '#82e0aa',
+                    'hold': '#f39c12', 'sell': '#e59866', 'underperform': '#e74c3c'
+                }
+                for symbol in filtered_df['symbol'].unique():
+                    sym_df = filtered_df[filtered_df['symbol'] == symbol].sort_values('date')
+                    breakdown_fig = go.Figure()
+                    for col, color in _rec_colors.items():
+                        breakdown_fig.add_trace(go.Bar(
+                            x=sym_df['date'], y=sym_df[col],
+                            name=col, marker_color=color
+                        ))
+                    breakdown_fig.update_layout(
+                        barmode='stack',
+                        title=f"{symbol} — Analyst Recommendation Breakdown",
+                        yaxis_title="Number of Analysts",
+                        legend_title="Rating"
+                    )
+                    st.plotly_chart(breakdown_fig, use_container_width=True)
+
+                # 4. Cross-Stock Scatter (latest snapshot per symbol)
+                st.subheader("Cross-Stock: Upside vs. Analyst Sentiment")
+                latest_df = (
+                    filtered_df.sort_values('date')
+                    .groupby('symbol', as_index=False)
+                    .last()
+                )
+                latest_df = latest_df[latest_df['price'] > 0].copy()
+                latest_df['upside_pct'] = (
+                    (latest_df['meanPriceTarget'] - latest_df['price']) / latest_df['price'] * 100
+                )
+                scatter_fig = go.Figure()
+                scatter_fig.add_trace(go.Scatter(
+                    x=latest_df['recommendationRate'],
+                    y=latest_df['upside_pct'],
+                    mode='markers+text',
+                    text=latest_df['symbol'],
+                    textposition='top center',
+                    marker=dict(size=10)
+                ))
+                scatter_fig.add_hline(y=0, line_dash='dash', line_color='gray', opacity=0.5)
+                scatter_fig.update_layout(
+                    title="Latest Snapshot: Upside Potential vs. Recommendation Rate",
+                    xaxis_title="Recommendation Rate (1 = Strong Buy → 5 = Strong Sell)",
+                    yaxis_title="Upside Potential (%)"
+                )
+                st.plotly_chart(scatter_fig, use_container_width=True)
         else:
             st.error("No data matches the selected filters.")
 
