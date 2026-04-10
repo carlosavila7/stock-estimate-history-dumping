@@ -3,7 +3,7 @@ import pandas as pd
 import subprocess
 import time
 import os
-import plotly.express as px
+import plotly.graph_objects as go
 from stock_estimates_db import StockEstimatesDB
 
 st.set_page_config(page_title="Stock Estimates Dashboard", layout="wide")
@@ -34,7 +34,7 @@ def dashboard_page():
 
         all_symbols = sorted(df['symbol'].unique())
         selected_symbols = st.sidebar.multiselect(
-            "Select Tickers", options=all_symbols, default=all_symbols)
+            "Select Tickers", options=all_symbols, default=[])
 
         min_date = df['date'].min()
         max_date = df['date'].max()
@@ -71,15 +71,35 @@ def dashboard_page():
 
             with tab2:
                 st.subheader("Mean Price Target Over Time")
-                line_fig = px.line(
-                    filtered_df,
-                    x='date',
-                    y='meanPriceTarget',
-                    color='symbol',
-                    markers=True,
-                    title="Trend of Analyst Price Targets"
-                )
+                line_fig = go.Figure()
+                for symbol in filtered_df['symbol'].unique():
+                    sym_df = filtered_df[filtered_df['symbol'] == symbol].sort_values('date')
+                    line_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['meanPriceTarget'],
+                        mode='lines+markers', name=f"{symbol} Mean Target",
+                        legendgroup=symbol
+                    ))
+                    line_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['price'],
+                        mode='lines+markers', name=f"{symbol} Price",
+                        legendgroup=symbol, line=dict(dash='dot')
+                    ))
+                line_fig.update_layout(title="Trend of Analyst Price Targets vs Current Price")
                 st.plotly_chart(line_fig)
+
+                st.subheader("Recommendation Rate Over Time")
+                rec_fig = go.Figure()
+                for symbol in filtered_df['symbol'].unique():
+                    sym_df = filtered_df[filtered_df['symbol'] == symbol].sort_values('date')
+                    rec_fig.add_trace(go.Scatter(
+                        x=sym_df['date'], y=sym_df['recommendationRate'],
+                        mode='lines+markers', name=symbol
+                    ))
+                rec_fig.update_layout(
+                    title="Analyst Recommendation Rate",
+                    yaxis=dict(range=[0, 5], title="Recommendation Rate")
+                )
+                st.plotly_chart(rec_fig)
         else:
             st.error("No data matches the selected filters.")
 
